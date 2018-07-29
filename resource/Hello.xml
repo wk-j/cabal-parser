@@ -1,0 +1,5 @@
+<project>
+    <packageId>XmlParser</packageId>
+    <packAsTool>true</packAsTool>
+    <version>0.1.0</version>
+</project>
