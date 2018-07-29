@@ -10,10 +10,9 @@ class KeyValue {
 }
 
 
-var input = @"
-     packageId: 100
-     version: 0.1.0
-";
+var comment = new CommentParser {
+    Single = "--"
+};
 
 var parser =
     from leading in Parse.WhiteSpace.Many()
@@ -26,6 +25,7 @@ var parser =
     select new KeyValue { Key = new string(key.ToArray()), Value = new string(value.ToArray()) };
 
 
+var input = File.ReadAllText("resource/Hello.cabal");
 var result = Parse.Many(parser).Parse(input);
 
 foreach (var item in result) {
