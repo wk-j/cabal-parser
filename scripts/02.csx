@@ -3,16 +3,16 @@
 
 using Sprache;
 
-class Line {
+class Item {
 
 }
 
-class KeyValue : Line {
+class KeyValue : Item {
     public string Key { set; get; }
     public string Value { set; get; }
 }
 
-class Comment : Line {
+class Comment : Item {
     public string Line { set; get; }
 }
 
@@ -29,11 +29,11 @@ var colon =
     select $"{s1}{colon}{s2}";
 
 var key =
-    from key in Parse.Letter.Many()
+    from key in Parse.Letter.XOr(Parse.Char('-')).Many()
     select new string(key.ToArray());
 
 var value =
-    from value in Parse.Except(Parse.AnyChar, Parse.WhiteSpace).Many()
+    from value in Parse.Except(Parse.AnyChar, Parse.LineEnd).Many()
     select new string(value.ToArray());
 
 var lineEnd = Parse.LineEnd.AtLeastOnce();
@@ -49,14 +49,13 @@ var parser =
 var input = File.ReadAllText("resource/Hello.cabal");
 
 var result =
-    from kv in parser.Select(x => x).XOr<Line>(comment)
+    from kv in comment.Select(x => x).XOr<Item>(parser)
     select kv;
 
 foreach (var item in result.Many().Parse(input)) {
     if (item is KeyValue item2) {
-        Console.WriteLine(item2.Key);
-        Console.WriteLine(item2.Value);
+        Console.WriteLine($"{item2.Key}: {item2.Value}");
     } else if (item is Comment comment) {
-        Console.WriteLine(comment.Line);
+        Console.WriteLine($"-- {comment.Line}");
     }
 }

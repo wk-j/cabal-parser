@@ -34,7 +34,7 @@ class XmlParser {
 
     static readonly Parser<string> Identifier =
         from first in Parse.Letter.Once()
-        from rest in Parse.LetterOrDigit.XOr(Parse.Char('-')).XOr(Parse.Char('-')).Many()
+        from rest in Parse.LetterOrDigit.XOr(Parse.Char('-')).Many()
         select new string(first.Concat(rest).ToArray());
 
     static Parser<T> Tag<T>(Parser<T> content) {

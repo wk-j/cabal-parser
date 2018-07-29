@@ -20,7 +20,7 @@ var parser =
     from s1 in Parse.Optional(Parse.Char(' ').Many())
     from colon in Parse.Once(Parse.Char(':'))
     from s2 in Parse.Optional(Parse.Char(' ').Many())
-    from value in Parse.Except(Parse.AnyChar, Parse.WhiteSpace).Many()
+    from value in Parse.AnyChar.Many()
     from _ in Parse.LineEnd.AtLeastOnce()
     select new KeyValue { Key = new string(key.ToArray()), Value = new string(value.ToArray()) };
 
