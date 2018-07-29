@@ -12,7 +12,7 @@ class KeyValue {
 
 var input = @"
      packageId: 100
-
+     version: 0.1.0
 ";
 
 var parser =
@@ -21,10 +21,14 @@ var parser =
     from s1 in Parse.Optional(Parse.Char(' ').Many())
     from colon in Parse.Once(Parse.Char(':'))
     from s2 in Parse.Optional(Parse.Char(' ').Many())
-    from value in Parse.LetterOrDigit.Many()
+    from value in Parse.Except(Parse.AnyChar, Parse.WhiteSpace).Many()
+    from _ in Parse.LineEnd.AtLeastOnce()
     select new KeyValue { Key = new string(key.ToArray()), Value = new string(value.ToArray()) };
 
 
-var result = parser.Parse(input);
-Console.WriteLine(result.Key);
-Console.WriteLine(result.Value);
+var result = Parse.Many(parser).Parse(input);
+
+foreach (var item in result) {
+    Console.WriteLine(item.Key);
+    Console.WriteLine(item.Value);
+}
