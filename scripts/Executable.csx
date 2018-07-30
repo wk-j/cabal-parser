@@ -9,23 +9,31 @@ var empty =
     from empty in Parse.LineEnd.Once()
     select empty;
 
+var value =
+    from value in Parse.Except(Parse.AnyChar, Parse.LineEnd).Many()
+    select new string(value.ToArray());
+
 var property =
     from key in Parse.Letter.XOr(Parse.Char('-')).Many()
     from colon in Parse.String(":")
     from _ in Parse.WhiteSpace.AtLeastOnce()
-    from value in Parse.Letter.Many()
-    from line in Parse.LineEnd.Once()
-    select new { name = new string(key.ToArray()), value = new string(value.ToArray()) };
+    from value in value
+    select new { Name = new string(key.ToArray()), Value = new string(value.ToArray()) };
 
 var executable =
-    from key in Parse.String("executable")
-    from space in Parse.WhiteSpace.AtLeastOnce()
-    from name in Parse.Letter.Many()
-    let n = new string(name.ToArray())
-    select new { Name = n };
+        from key in Parse.String("executable").Once()
+        from space in Parse.WhiteSpace.Many()
+        from name in Parse.Letter.Many()
+        select new { Executable = new string(name.ToArray()) };
+
+/*
+hs-source-dirs:      src
+*/
 
 var input = @"
-hs-source-dirs:      src
+homepage:            https://github.com/githubuser/Hello#readme
+license:             BSD3
+license-file:        LICENSE
 executable hello
   hs-source-dirs:      src
   main-is:             Main.hs
@@ -36,8 +44,9 @@ executable hello
     , bytestring
 ";
 
-var result = property
-    .XOr<object>(executable)
+var result =
+    executable
+    .XOr<object>(property)
     .XOr<object>(empty)
     .Many()
     .Parse(input);

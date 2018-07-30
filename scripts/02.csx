@@ -20,12 +20,12 @@ class Property : CabalItem {
         select $"{s1}{colon}{s2}";
 
     static Parser<String> key =
-        from key in Parse.Letter.XOr(Parse.Char('-')).Many()
-        select new string(key.ToArray());
+        from key in Parse.Letter.XOr(Parse.Char('-')).Many().Text()
+        select key;
 
     static Parser<string> value =
-        from value in Parse.Except(Parse.AnyChar, Parse.LineEnd).Many()
-        select new string(value.ToArray());
+        from value in Parse.Except(Parse.AnyChar, Parse.LineEnd).Many().Text()
+        select value;
 
     public static Parser<Property> Parser =
         from key in key
@@ -68,12 +68,42 @@ class Executable : CabalItem {
     public IEnumerable<ExecutableProperty> Properties { set; get; }
     public BuildDepends BuildDepends { set; get; }
 
+    static Parser<string> colon =
+        from s1 in Parse.Optional(Parse.Char(' ').Many())
+        from colon in Parse.Once(Parse.Char(':'))
+        from s2 in Parse.Optional(Parse.Char(' ').Many())
+        select $"{s1}{colon}{s2}";
+
+    static Parser<String> key =
+        from space in Parse.WhiteSpace.Many()
+        from key in Parse.Letter.XOr(Parse.Char('-')).Many().Text()
+        select key;
+
+    static Parser<string> value =
+        from value in Parse.Except(Parse.AnyChar, Parse.LineEnd).Many().Text()
+        select value;
+
+    public static Parser<ExecutableProperty> property =
+        from key in key
+        from colon in colon
+        from value in value
+        from lineEnd in lineEnd
+        select new ExecutableProperty { Key = key, Value = value };
+
+    static Parser<IEnumerable<string>> lineEnd = Parse.LineEnd.Once();
+
     public static Parser<Executable> Parser =
-        from key in Parse.String("executable")
+        from key in Parse.String("executable").Once()
         from space in Parse.WhiteSpace.AtLeastOnce()
-        from chars in Parse.Letter.Many()
-        let name = new string(chars.ToArray())
-        select new Executable { Name = name };
+        from name in Parse.Letter.Many().Text()
+        from property in property.Many()
+        select new Executable {
+            Name = name,
+            Properties = property.Select(x => new ExecutableProperty {
+                Key = x.Key,
+                Value = x.Value
+            })
+        };
 }
 
 class Cabal {
@@ -90,10 +120,11 @@ class Parser {
         var property = Property.Parser;
         var executable = Executable.Parser;
         var empty = Empty.Parser;
-        var parser = comment
+        var parser =
+            comment
+            .XOr<CabalItem>(executable)
             .XOr<CabalItem>(empty)
             .XOr<CabalItem>(property)
-            .XOr<CabalItem>(executable)
             .Many();
 
         var result = parser.Parse(input);
@@ -107,6 +138,7 @@ class Parser {
 }
 
 var input = File.ReadAllText("resource/Hello.cabal");
+// var input = File.ReadAllText("resource/Executable.cabal");
 var result = Parser.ParseInput(input);
 var json = JsonConvert.SerializeObject(result, Formatting.Indented);
 Console.WriteLine(json);
