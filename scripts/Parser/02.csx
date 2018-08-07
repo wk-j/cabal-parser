@@ -122,9 +122,9 @@ class Parser {
         var empty = Empty.Parser;
         var parser =
             comment
-            .XOr<CabalItem>(executable)
-            .XOr<CabalItem>(empty)
-            .XOr<CabalItem>(property)
+            .Or<CabalItem>(executable)
+            .Or<CabalItem>(empty)
+            .Or<CabalItem>(property)
             .Many();
 
         var result = parser.Parse(input);
@@ -136,6 +136,7 @@ class Parser {
         };
     }
 }
+
 
 var input = File.ReadAllText("resource/Hello.cabal");
 // var input = File.ReadAllText("resource/Executable.cabal");
