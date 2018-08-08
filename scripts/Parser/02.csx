@@ -4,6 +4,7 @@
 
 using Sprache;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 class CabalItem { }
 
@@ -67,6 +68,7 @@ class Executable : CabalItem {
     public string Name { set; get; }
     public IEnumerable<ExecutableProperty> Properties { set; get; }
     public BuildDepends BuildDepends { set; get; }
+    public static Parser<IEnumerable<char>> NotWhite { get => notWhite; set => notWhite = value; }
 
     static Parser<string> colon =
         from s1 in Parse.Optional(Parse.Char(' ').Many())
@@ -92,13 +94,15 @@ class Executable : CabalItem {
 
     static Parser<IEnumerable<string>> lineEnd = Parse.LineEnd.Once();
 
+    static Parser<IEnumerable<char>> notWhite = Parse.Except(Parse.AnyChar, Parse.WhiteSpace).Many();
+
     public static Parser<Executable> Parser =
         from key in Parse.String("executable").Once()
         from space in Parse.WhiteSpace.AtLeastOnce()
-        from name in Parse.Letter.Many().Text()
+        from name in NotWhite.Text()
         from property in property.Many()
         select new Executable {
-            Name = name,
+            Name = name.ToString(),
             Properties = property.Select(x => new ExecutableProperty {
                 Key = x.Key,
                 Value = x.Value
